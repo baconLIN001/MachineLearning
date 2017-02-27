@@ -79,3 +79,47 @@ id = 0
 for uid in offline_candidate_day30:
     last_uid = (uid[0],uid[1],uid[2]-1)
     for i in range(4):
+        pX[id][i] = math.log1p(ui_dict[i][last_uid] if last_uid in ui_dict else 0)
+        id += 1
+
+#get predict ppX for online_candidate_day31
+ppX = np.zeros((len(online_candidate_day31),4))
+id = 0
+for uid in online_candidate_day31:
+    last_uid = (uid[0],uid[1],uid[2]-1)
+    for i in range(4):
+        ppX[id][i] = math.log1p(ui_dict[i][last_uid] if last_uid in ui_dict else 0)
+        id += 1
+
+# trainnig
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+LRmodel = LogisticRegression()
+DTmodel = DecisionTreeClassifier(max_depth=4)
+RFmodel = RandomForestClassifier()
+
+LRmodel.fit(X,y)
+
+# evaluate
+py = LRmodel.predict_proba(pX)
+npy = []
+for a in py:
+    npy.append(a[1])
+py = npy
+
+print 'pX = '
+print pX
+
+#combine
+lx = zip(offline_candidate_day30,py)
+print '-------------------'
+# sort by predict score
+lx = sorted(lx,key = lambda x:x[1],reverse=True)
+print '-------------------'
+
+wf = open('ans.csv','w')
+wf.write('user_id,item_id\n')
+for i in range(437):
+    item = lx[i]
+    wf.write('%s,%s\n'%(item[0][0],item[0][1]))
